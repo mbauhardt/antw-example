@@ -1,5 +1,11 @@
 <project name="plant">
     <import file="../../common-build.xml" />
-	<addArtifactToClasspath module="water"/>
-	<addArtifactToClasspath module="sun"/>
+	<addArtifactDependencyToClasspath module="water"/>
+	<addArtifactDependencyToClasspath module="sun"/>
+	
+    <path id="dependend-modules">
+        <pathelement path="/water" />
+    	<pathelement path="/sun" />
+    </path>
+
 </project>

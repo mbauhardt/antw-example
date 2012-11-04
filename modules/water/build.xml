@@ -1,3 +1,4 @@
 <project name="water">
     <import file="../../common-build.xml" />
+	<path id="dependend-modules" />
 </project>

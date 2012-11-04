@@ -20,4 +20,12 @@
 		<subant buildpathref="modules" target="clean" />
 	</target>
 
+	<target name="eclipse">
+	        <subant buildpathref="modules" target="eclipse" />
+	</target>
+
+	<target name="clean-eclipse">
+	        <subant buildpathref="modules" target="clean-eclipse" />
+	</target>
+
 </project>

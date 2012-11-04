@@ -7,29 +7,48 @@
 		<fileset dir="${root.dir}/lib/compile">
 			<include name="**/*.jar" />
 		</fileset>
-		<fileset dir="build">
-			<include name="**/*.jar" />
-		</fileset>
 	</path>
 
-	<path id="artifact.classpath" />
+	<path id="test.classpath">
+	  <fileset dir="${root.dir}/lib/test">
+	    <include name="**/*.jar" />
+          </fileset>
+  	</path>
 
-	 <macrodef name="addArtifactToClasspath">
+	<path id="build.classpath">
+	  <fileset dir="${root.dir}/lib/build">
+	    <include name="**/*.jar" />
+	  </fileset>
+	</path>
+
+	<path id="artifact.classpath">
+	  <fileset dir="build/artifacts">
+            <include name="**/*.jar" />
+          </fileset>
+	</path>
+	
+	<path id="test.classes.classpath">
+	  <pathelement path="build/test-classes" />
+        </path>
+	
+	<path id="artifact.dependency.classpath" />
+
+	 <macrodef name="addArtifactDependencyToClasspath">
         <attribute name="module" />
         <sequential>
-            <pathconvert property="artifact.classpath.@{module}" refid="artifact.classpath" />
-            <path id="artifact.classpath">
-                <pathelement path="${artifact.classpath.@{module}}" />
-                <fileset dir="${root.dir}/modules/@{module}/build">
-                    <include name="**/*.jar" />
+            <pathconvert property="artifact.dependency.classpath.@{module}" refid="artifact.dependency.classpath" />
+            <path id="artifact.dependency.classpath">
+                <pathelement path="${artifact.dependency.classpath.@{module}}" />
+                <fileset dir="${root.dir}/modules/@{module}">
+                    <include name="build/artifacts/*.jar" />
                 </fileset>
             </path>
 		</sequential>
 	</macrodef>
 	
 	<target name="clean">
-		<echo>clean... - delete directory ${ant.project.name}/build</echo>
-		<delete dir="${ant.project.name}/build">
+		<echo>clean... - delete directory ${basedir}/build</echo>
+		<delete includeemptydirs="true" failonerror="false" dir="build">
 		</delete>
 	</target>
 
@@ -37,7 +56,8 @@
 		<echo>compile...</echo>
 		<mkdir dir="build/classes" />
 		<javac srcdir="src/main/java" includes="**/*.java" destdir="build/classes" includeantruntime="false">
-			<classpath refid="artifact.classpath" />
+			<classpath refid="artifact.dependency.classpath" />
+			<classpath refid="compile.classpath" />
 		</javac>
 	</target>
 
@@ -47,6 +67,8 @@
 		<javac srcdir="src/test/java" includes="**/*.java" destdir="build/test-classes">
 			<classpath refid="compile.classpath" />
 			<classpath refid="artifact.classpath" />
+			<classpath refid="test.classpath" />
+			<classpath refid="artifact.dependency.classpath" />
 		</javac>
 	</target>
 
@@ -55,12 +77,7 @@
 		<jar jarfile="build/artifacts/${jar.name}" basedir="build/classes" />
 	</target>
 
-	<target name="unit-jar" depends="compile-tests">
-		<echo>building unit jar...</echo>
-		<jar jarfile="build/test-artifacts/${jar.name}" basedir="build/test-classes" />
-	</target>
-
-	<target name="test" depends="jar, unit-jar">
+	<target name="test" depends="jar, compile-tests">
 		<mkdir dir="build/reports" />
 		<junit haltonfailure="true" fork="yes" forkmode="once">
 			<jvmarg value="-javaagent:lib/provided/antw-profiler-0.6-fat.jar"/>
@@ -70,8 +87,11 @@
 			<formatter classname="antw.junit.JUnitProfilerFormatter" usefile="false"/>
 			
 			<classpath>
+			        <path refid="test.classpath" />
 				<path refid="compile.classpath" />
 				<path refid="artifact.classpath" />
+				<path refid="artifact.dependency.classpath" />
+				<path refid="test.classes.classpath" />
 			</classpath>
 
 			<batchtest fork="yes" todir="build/reports">
@@ -81,5 +101,47 @@
 			</batchtest>
 		</junit>
 	</target>
+
+
+    <target name="eclipse" depends="clean-eclipse">
+        <echo>Generating eclipse files for ${ant.project.name}</echo>
+        <taskdef name="eclipse" classname="prantl.ant.eclipse.EclipseTask" classpathref="build.classpath" />
+        <mkdir dir="build/classes-eclipse-main" />
+        <mkdir dir="build/classes-eclipse-test" />
+        <mkdir dir="build/classes-eclipse-it" />
+        <eclipse>
+            <settings>
+                <jdtcore compilercompliance="6.0" />
+                <resources encoding="UTF-8" />
+            </settings>
+            <project name="${ant.project.name}" />
+            <classpath>
+                <container path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6" />
+
+                <source path="${basedir}/src/main/java" output="build/classes-eclipse-main" />
+                <source path="${basedir}/src/main/resources" output="build/classes-eclipse-main" />
+                <source path="${basedir}/src/main/generated" output="build/classes-eclipse-main" />
+                <source path="${basedir}/src/test/java" output="build/classes-eclipse-test" />
+                <source path="${basedir}/src/test/resources" output="build/classes-eclipse-test" />
+                <source path="${basedir}/src/it/java" output="build/classes-eclipse-it" />
+                <source path="${basedir}/src/it/resources" output="build/classes-eclipse-it" />
+
+                <source pathref="dependend-modules" />
+
+                <output path="build/classes-eclipse-main" />
+                <library pathref="test.classpath" exported="true" />
+                <library pathref="compile.classpath" exported="true"/>
+            </classpath>
+        </eclipse>
+    </target>
+
+	<target name="clean-eclipse" description="--> clean the Eclipse project files">
+          <delete file=".classpath" />
+          <delete file=".eclipse" />
+          <delete file=".project" />
+          <delete dir=".settings" />
+	</target>
+
+
 
 </project>

@@ -1,7 +1,15 @@
 <project name="carnivore">
     <import file="../../common-build.xml" />
-	<addArtifactToClasspath module="sun"/>
-	<addArtifactToClasspath module="water"/>
-    <addArtifactToClasspath module="plant"/>
-	<addArtifactToClasspath module="herbivore"/>
+	<addArtifactDependencyToClasspath module="sun"/>
+	<addArtifactDependencyToClasspath module="water"/>
+    <addArtifactDependencyToClasspath module="plant"/>
+	<addArtifactDependencyToClasspath module="herbivore"/>
+	
+    <path id="dependend-modules">
+        <pathelement path="/water" />
+    	<pathelement path="/sun" />
+    	<pathelement path="/plant" />
+    	<pathelement path="/herbivore" />
+    </path>
+		
 </project>
